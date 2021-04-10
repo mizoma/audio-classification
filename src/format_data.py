@@ -28,20 +28,22 @@ class MelspectrogramInput():
         self.image_height = 128
         self.image_width = 128
 
-        self.target_names = self.produce_target_names()
-        self.target = self.produce_target()
-        self.images = self.produce_images()
-        self.data = self.produce_data()
+        self.target_names = self._target_names()
+        self.target = self._target(self.target_names)
+        self.target_names_single = self._target_names(single=True)
+        self.target_single = self._target(self.target_names_single)
+        self.images = self._images()
+        self.data = self._data()
 
 
-    def produce_data(self):
+    def _data(self):
 
         return self.images.reshape(
             (len(self.images), self.image_height * self.image_width)
             )
 
 
-    def produce_images(self):
+    def _images(self):
 
         orig_images = pickle.load(open(self.imagedir, 'rb'))
         images = np.empty((len(orig_images), self.image_height, self.image_width))
@@ -57,23 +59,31 @@ class MelspectrogramInput():
         return images
 
 
-    def produce_target(self):
+    def _target(self, target_names):
 
-        target = np.empty((len(self.target_names),))
-        unique_names = np.unique(self.target_names)
+        target = np.empty((len(target_names),))
+        unique_names = np.unique(target_names)
 
-        for i in range(len(self.target_names)):
-            index = np.where(unique_names==self.target_names[i])[0][0]
+        for i in range(len(target_names)):
+            index = np.where(unique_names==target_names[i])[0][0]
             target[i] = index
 
         return target
 
 
-    def produce_target_names(self):
+    def _target_names(self, single=False):
 
-        target_names = pd.read_csv(self.labelfile)
-        
-        return target_names['labels'].values
+        target_names_df = pd.read_csv(self.labelfile)
+
+        if single:
+
+            target_names = target_names_df['labels'].str.split(',').str[0].values
+
+        else:
+            
+            target_names = target_names_df['labels'].values
+
+        return target_names
 
 
     
